@@ -5,7 +5,7 @@ import aiohttp
 
 log = logging.getLogger("bot.alerts")
 
-BOT_TOKEN = "8490431456:AAHlWFvdIb1yUaFOagRYks9E991GY3opaHk"
+BOT_TOKEN = "8490431456:AAFb4hY072QysITXFHp01T8v4lXc_OVkBWo"
 CHAT_ID = "431603030"
 TG_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
