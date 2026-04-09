@@ -10,6 +10,7 @@ from src.indicators import compute_indicators
 from src.strategy import generate_signal, check_exit, Regime
 from src.risk_manager import RiskManager
 from src.funding_arb import FundingArbitrage
+from src import alerts
 
 log = logging.getLogger("bot.trader")
 
@@ -50,12 +51,14 @@ class Trader:
         balance = await self._get_balance()
         self.risk.set_initial_balance(balance)
         log.info("Initial balance: $%.2f USDT", balance)
+        await alerts.alert_started(self.cfg.exchange.name, balance, self.cfg.exchange.sandbox)
 
         while self._running:
             try:
                 await self._tick()
             except Exception as e:
                 log.error("Tick error: %s", e, exc_info=True)
+                await alerts.alert_error(str(e))
 
             # Wait for next candle
             now = datetime.now(timezone.utc).timestamp()
@@ -86,6 +89,7 @@ class Trader:
         log.info("Trading: %s", self.risk.summary())
         log.info("Funding Arb: %s", self.funding.summary())
         log.info("=" * 60)
+        await alerts.alert_stopped(self.risk.summary())
         await self.exchange.close()
 
     async def _tick(self):
@@ -128,7 +132,10 @@ class Trader:
                 except Exception as e:
                     log.error("Close failed: %s", e)
                     return
-                self.risk.close_position(price, balance)
+                entry_p = self.risk.position.entry_price
+                pnl_pct = (price - entry_p) / entry_p * 100
+                pnl_abs = self.risk.close_position(price, balance)
+                await alerts.alert_trade_closed(symbol, entry_p, price, pnl_pct, pnl_abs, reason)
             return
 
         # Check entry
@@ -170,6 +177,8 @@ class Trader:
 
         self.risk.open_position(fill_price, size, signal.stop_loss,
                                 signal.take_profit, signal.regime.value)
+        await alerts.alert_trade_opened(symbol, fill_price, size,
+                                        signal.stop_loss, signal.take_profit, signal.reason)
 
     async def _get_balance(self) -> float:
         try:
