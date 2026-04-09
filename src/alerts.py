@@ -1,11 +1,12 @@
 """Telegram alerts — sends important events to Alice bot. No spam."""
 
 import logging
+import os
 import aiohttp
 
 log = logging.getLogger("bot.alerts")
 
-BOT_TOKEN = "8490431456:AAFb4hY072QysITXFHp01T8v4lXc_OVkBWo"
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 CHAT_ID = "431603030"
 TG_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
