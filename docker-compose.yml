@@ -1,0 +1,14 @@
+services:
+  btc-trader:
+    build: .
+    container_name: btc-trader
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
